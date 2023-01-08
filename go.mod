@@ -1,4 +1,4 @@
-module delve-client
+module github.com/wanyuqin/delve-client
 
 go 1.19
 
