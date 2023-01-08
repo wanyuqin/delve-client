@@ -43,10 +43,6 @@ func (d *DelveClient) ListSource(filter string) ([]string, error) {
 	return d.C.ListSources(filter)
 }
 
-func (d *DelveClient) SourceFile(filter string) {
-
-}
-
 func (d *DelveClient) ListFunctions(filter string) ([]string, error) {
 	return d.C.ListFunctions(filter)
 }
