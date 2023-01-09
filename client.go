@@ -47,6 +47,26 @@ func (d *DelveClient) ListFunctions(filter string) ([]string, error) {
 	return d.C.ListFunctions(filter)
 }
 
+func (d *DelveClient) ListBreakpoints(all bool) ([]*api.Breakpoint, error) {
+	return d.C.ListBreakpoints(all)
+}
+
+func (d *DelveClient) ListGoroutines(start int, count int) ([]*api.Goroutine, int, error) {
+	return d.C.ListGoroutines(start, count)
+}
+
+func (d *DelveClient) Continue() <-chan *api.DebuggerState {
+	return d.C.Continue()
+}
+
+func (d *DelveClient) Step() (*api.DebuggerState, error) {
+	return d.C.Step()
+}
+
+func (d *DelveClient) Next() (*api.DebuggerState, error) {
+	return d.C.Next()
+}
+
 func (d *DelveClient) initFuncBreakPoint() (int, error) {
 	if d.StartFunc == "" {
 		d.StartFunc = startFunc
