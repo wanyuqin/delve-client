@@ -5,7 +5,7 @@ a delve client package
 
 **启动流程**
 
-![img.png](doc/start—flow.png)
+![img.png](doc/start_flow.png)
 
 
 
