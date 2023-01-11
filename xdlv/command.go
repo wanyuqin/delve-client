@@ -6,18 +6,23 @@ import (
 	"io"
 	"os/exec"
 	"strings"
+	"sync"
 )
 
 var apiServerPrefix = "API server listening at: "
 
 type Dlv struct {
-	cmd *exec.Cmd
+	cmd        *exec.Cmd
+	serverAddr string
 
 	stdin  io.WriteCloser
 	stdout io.ReadCloser
 	stderr io.ReadCloser
 
-	serverAddr string
+	StdoutChan *chan string
+	StderrChan *chan string
+
+	mu sync.Mutex
 }
 
 type DlvBuilder struct {
@@ -86,6 +91,10 @@ func (d *DlvBuilder) Build() (*Dlv, error) {
 	dlv.stdout, _ = dlv.cmd.StdoutPipe()
 	dlv.stdin, _ = dlv.cmd.StdinPipe()
 	dlv.stderr, _ = dlv.cmd.StderrPipe()
+	stdoutChan := make(chan string, 100)
+	stderrChan := make(chan string, 100)
+	dlv.StdoutChan = &stdoutChan
+	dlv.StderrChan = &stderrChan
 	return dlv, nil
 }
 
@@ -99,6 +108,8 @@ func (d *Dlv) RunServer() error {
 	if d.serverAddr != "" {
 		fmt.Printf("dlv server run at %s \n", d.serverAddr)
 	}
+
+	go d.stdoutProcess()
 	return err
 }
 
@@ -114,6 +125,7 @@ func (d *Dlv) parseListeningAddr() {
 		n, _ := d.stdout.Read(buf)
 
 		text := string(buf[:n])
+		// 解析dlv启动地址
 		if flag && strings.HasPrefix(text, apiServerPrefix) {
 			nl := strings.Index(text, "\n")
 			if nl > 0 {
@@ -123,6 +135,28 @@ func (d *Dlv) parseListeningAddr() {
 				return
 			}
 
+		}
+	}
+}
+
+func (d *Dlv) stdoutProcess() {
+	for {
+		buf := make([]byte, 4*1024)
+		n, _ := d.stdout.Read(buf)
+		text := string(buf[:n])
+		if text != "" {
+			*d.StdoutChan <- string(text)
+		}
+	}
+}
+
+func (d *Dlv) stderrProcess() {
+	for {
+		buf := make([]byte, 4*1024)
+		n, _ := d.stdout.Read(buf)
+		text := string(buf[:n])
+		if text != "" {
+			*d.StderrChan <- string(text)
 		}
 	}
 }
